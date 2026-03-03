@@ -35,5 +35,6 @@ jobs:
             -scheme MorningRoutinePhotoArchiver \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
+            APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING=NO \
             CODE_SIGNING_ALLOWED=NO \
             build
