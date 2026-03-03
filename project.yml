@@ -1,0 +1,31 @@
+name: MorningRoutinePhotoArchiver
+options:
+  minimumXcodeGenVersion: 2.39.0
+settings:
+  base:
+    SWIFT_VERSION: 5.0
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1.0
+targets:
+  MorningRoutinePhotoArchiver:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - MorningRoutinePhotoArchiverApp/App
+      - MorningRoutinePhotoArchiverApp/AppIntents
+    resources:
+      - MorningRoutinePhotoArchiverApp/Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.evan.morningroutinephotoarchiver
+        INFOPLIST_FILE: MorningRoutinePhotoArchiverApp/Resources/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+schemes:
+  MorningRoutinePhotoArchiver:
+    build:
+      targets:
+        MorningRoutinePhotoArchiver: all
+    run:
+      config: Debug
