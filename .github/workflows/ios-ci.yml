@@ -86,14 +86,34 @@ jobs:
           xcrun simctl privacy "${SIMULATOR_UDID}" grant photos-add "${BUNDLE_ID}" || true
           if xcrun simctl install "${SIMULATOR_UDID}" "${APP_PATH}"; then
             xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/home-before-launch-${SAFE_SIMULATOR_NAME}.png"
-            LAUNCH_OUTPUT="$(xcrun simctl launch "${SIMULATOR_UDID}" "${BUNDLE_ID}" 2>&1 || true)"
-            printf '%s\n' "${LAUNCH_OUTPUT}"
-            sleep 8
-            if [[ "${LAUNCH_OUTPUT}" == *"${BUNDLE_ID}:"* ]]; then
-              xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/app-after-launch-${SAFE_SIMULATOR_NAME}.png"
-            else
-              xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/home-launch-fallback-${SAFE_SIMULATOR_NAME}.png"
-            fi
+
+            # Trigger the capture via URL scheme to simulate NFC/Shortcut launch
+            echo "Triggering capture via URL scheme..."
+            xcrun simctl openurl "${SIMULATOR_UDID}" "morningroutine://startCapture"
+
+            # Take screenshots at different intervals during the capture sequence
+            # Get Ready: 2s, then each angle: 4s positioning + 3s countdown + capture
+            # Total sequence: 2s + (4+3)*5 = 37 seconds
+            sleep 1  # App launch
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/1-get-ready-${SAFE_SIMULATOR_NAME}.png"
+
+            sleep 3  # During first angle positioning
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/2-front-positioning-${SAFE_SIMULATOR_NAME}.png"
+
+            sleep 4  # During countdown
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/3-front-countdown-${SAFE_SIMULATOR_NAME}.png"
+
+            sleep 8  # Next angle positioning
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/4-right-positioning-${SAFE_SIMULATOR_NAME}.png"
+
+            sleep 10  # Mid-sequence
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/5-back-countdown-${SAFE_SIMULATOR_NAME}.png"
+
+            sleep 10  # Near end
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/6-face-capture-${SAFE_SIMULATOR_NAME}.png"
+
+            sleep 5  # Completion
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/7-done-${SAFE_SIMULATOR_NAME}.png"
           else
             echo "App install failed; capturing simulator home screen instead."
             xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/home-install-fallback-${SAFE_SIMULATOR_NAME}.png"
