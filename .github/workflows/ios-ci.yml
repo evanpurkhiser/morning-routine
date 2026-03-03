@@ -12,6 +12,8 @@ jobs:
   build:
     name: Build iOS app
     runs-on: macos-15
+    env:
+      DERIVED_DATA: ${{ runner.temp }}/DerivedData
 
     steps:
       - name: Checkout
@@ -28,13 +30,64 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      - name: Select simulator device
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          raw = subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"], text=True)
+          data = json.loads(raw)
+
+          choices = ["iPhone 16 Pro", "iPhone 16", "iPhone 15 Pro", "iPhone 15"]
+          selected = None
+
+          for runtime_devices in data.get("devices", {}).values():
+              for device in runtime_devices:
+                  if device.get("name") in choices and device.get("isAvailable"):
+                      selected = (device["udid"], device["name"])
+                      break
+              if selected:
+                  break
+
+          if not selected:
+              raise SystemExit("No supported iPhone simulator found")
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"SIMULATOR_UDID={selected[0]}\n")
+              env.write(f"SIMULATOR_NAME={selected[1]}\n")
+
+          print(f"Selected simulator: {selected[1]} ({selected[0]})")
+          PY
+
       - name: Build (iOS Simulator, no signing)
         run: |
           xcodebuild \
             -project MorningRoutinePhotoArchiver.xcodeproj \
             -scheme MorningRoutinePhotoArchiver \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination "id=${SIMULATOR_UDID}" \
             -configuration Debug \
+            -derivedDataPath "${DERIVED_DATA}" \
             APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING=NO \
             CODE_SIGNING_ALLOWED=NO \
             build
+
+      - name: Capture simulator screenshot
+        run: |
+          mkdir -p artifacts/screenshots
+          SAFE_SIMULATOR_NAME="${SIMULATOR_NAME// /-}"
+          xcrun simctl boot "${SIMULATOR_UDID}" || true
+          xcrun simctl bootstatus "${SIMULATOR_UDID}" -b
+          xcrun simctl install "${SIMULATOR_UDID}" "${DERIVED_DATA}/Build/Products/Debug-iphonesimulator/MorningRoutinePhotoArchiver.app"
+          xcrun simctl launch "${SIMULATOR_UDID}" com.evanpurkhiser
+          sleep 5
+          xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/app-home-${SAFE_SIMULATOR_NAME}.png"
+
+      - name: Upload screenshots artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-screenshots
+          path: artifacts/screenshots/*.png
+          if-no-files-found: warn

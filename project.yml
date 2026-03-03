@@ -18,7 +18,7 @@ targets:
       - MorningRoutinePhotoArchiverApp/Resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.evan.morningroutinephotoarchiver
+        PRODUCT_BUNDLE_IDENTIFIER: com.evanpurkhiser
         INFOPLIST_FILE: MorningRoutinePhotoArchiverApp/Resources/Info.plist
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO

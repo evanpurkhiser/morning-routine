@@ -8,7 +8,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.evan.morningroutinephotoarchiver</string>
+			<string>com.evanpurkhiser</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>morningroutine</string>
