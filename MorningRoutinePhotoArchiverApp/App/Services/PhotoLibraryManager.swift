@@ -28,7 +28,14 @@ final class PhotoLibraryManager {
     }
 
     func savePhoto(_ data: Data, toAlbumNamed albumName: String) async {
-        guard let collection = fetchAlbum(named: albumName) ?? await fetchOrCreateAlbum(named: albumName) else {
+        let collection: PHAssetCollection?
+        if let existing = fetchAlbum(named: albumName) {
+            collection = existing
+        } else {
+            collection = await fetchOrCreateAlbum(named: albumName)
+        }
+
+        guard let collection else {
             return
         }
 
@@ -93,7 +100,7 @@ final class PhotoLibraryManager {
     }
 
     private func performChanges(_ block: @escaping () -> Void) async throws {
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             PHPhotoLibrary.shared().performChanges(block) { success, error in
                 if let error {
                     continuation.resume(throwing: error)
