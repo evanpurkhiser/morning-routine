@@ -12,8 +12,6 @@ jobs:
   build:
     name: Build iOS app
     runs-on: macos-15
-    env:
-      DERIVED_DATA: ${{ runner.temp }}/DerivedData
 
     steps:
       - name: Checkout
@@ -63,6 +61,7 @@ jobs:
 
       - name: Build (iOS Simulator, no signing)
         run: |
+          DERIVED_DATA="${RUNNER_TEMP}/DerivedData"
           xcodebuild \
             -project MorningRoutinePhotoArchiver.xcodeproj \
             -scheme MorningRoutinePhotoArchiver \
@@ -75,6 +74,7 @@ jobs:
 
       - name: Capture simulator screenshot
         run: |
+          DERIVED_DATA="${RUNNER_TEMP}/DerivedData"
           mkdir -p artifacts/screenshots
           SAFE_SIMULATOR_NAME="${SIMULATOR_NAME// /-}"
           xcrun simctl boot "${SIMULATOR_UDID}" || true
