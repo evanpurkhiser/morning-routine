@@ -8,6 +8,14 @@ struct CameraPreviewView: UIViewRepresentable {
         let view = PreviewView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
+
+        // Set video orientation to portrait
+        if let connection = view.videoPreviewLayer.connection {
+            if connection.isVideoOrientationSupported {
+                connection.videoOrientation = .portrait
+            }
+        }
+
         return view
     }
 
@@ -26,5 +34,10 @@ final class PreviewView: UIView {
             fatalError("Expected AVCaptureVideoPreviewLayer")
         }
         return layer
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        videoPreviewLayer.frame = bounds
     }
 }
