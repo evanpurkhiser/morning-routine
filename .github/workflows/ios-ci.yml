@@ -75,18 +75,29 @@ jobs:
       - name: Capture simulator screenshot
         run: |
           DERIVED_DATA="${RUNNER_TEMP}/DerivedData"
+          BUNDLE_ID="com.evanpurkhiser"
           APP_PATH="${DERIVED_DATA}/Build/Products/Debug-iphonesimulator/MorningRoutinePhotoArchiver.app"
           mkdir -p artifacts/screenshots
           SAFE_SIMULATOR_NAME="${SIMULATOR_NAME// /-}"
           xcrun simctl boot "${SIMULATOR_UDID}" || true
           xcrun simctl bootstatus "${SIMULATOR_UDID}" -b
+          xcrun simctl privacy "${SIMULATOR_UDID}" grant camera "${BUNDLE_ID}" || true
+          xcrun simctl privacy "${SIMULATOR_UDID}" grant photos "${BUNDLE_ID}" || true
+          xcrun simctl privacy "${SIMULATOR_UDID}" grant photos-add "${BUNDLE_ID}" || true
           if xcrun simctl install "${SIMULATOR_UDID}" "${APP_PATH}"; then
-            xcrun simctl launch "${SIMULATOR_UDID}" com.evanpurkhiser || true
-            sleep 5
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/home-before-launch-${SAFE_SIMULATOR_NAME}.png"
+            LAUNCH_OUTPUT="$(xcrun simctl launch "${SIMULATOR_UDID}" "${BUNDLE_ID}" 2>&1 || true)"
+            printf '%s\n' "${LAUNCH_OUTPUT}"
+            sleep 8
+            if [[ "${LAUNCH_OUTPUT}" == *"${BUNDLE_ID}:"* ]]; then
+              xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/app-after-launch-${SAFE_SIMULATOR_NAME}.png"
+            else
+              xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/home-launch-fallback-${SAFE_SIMULATOR_NAME}.png"
+            fi
           else
             echo "App install failed; capturing simulator home screen instead."
+            xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/home-install-fallback-${SAFE_SIMULATOR_NAME}.png"
           fi
-          xcrun simctl io "${SIMULATOR_UDID}" screenshot "artifacts/screenshots/app-home-${SAFE_SIMULATOR_NAME}.png"
 
       - name: Upload screenshots artifact
         if: always()
